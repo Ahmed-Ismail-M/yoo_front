@@ -1,9 +1,9 @@
+import os
 from pathlib import Path
-from functools import partial
 from PySide6.QtGui import QPixmap
 
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
+    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
     QListWidget, QListWidgetItem, QFileDialog, QMessageBox, QLabel, QComboBox, QCheckBox
 )
 from PySide6.QtCore import QThreadPool
@@ -11,10 +11,7 @@ from PySide6.QtMultimedia import QSoundEffect
 
 from core.config_manager import load_config, save_config
 from core.metadata_fetcher import MetadataFetcher
-from core.types import DownloadTypes
-from core.worker import DownloadTask
 from ui.link_item_widget import LinkItemWidget
-from core.signals import DownloadWorkerSignals
 import qdarktheme
 from core.downloader import download_missing_binaries
 
@@ -22,7 +19,7 @@ from core.downloader import download_missing_binaries
 class DownoaderWidget(QWidget):
     def __init__(self):
         super().__init__()
-        qdarktheme.setup_theme()
+        qdarktheme.setup_theme("dark" if load_config().get('dark_mode', False) else "light")
         self.setWindowTitle('YT Downloader')
         self.setMinimumSize(640, 480)
 
@@ -32,6 +29,8 @@ class DownoaderWidget(QWidget):
         self.threadpool = QThreadPool.globalInstance()
 
         main = QVBoxLayout()
+        main.setSpacing(10)
+        main.setContentsMargins(10, 10, 10, 10)
         self.setLayout(main)
 
         # Top row: input + add
@@ -44,13 +43,15 @@ class DownoaderWidget(QWidget):
         add_btn.clicked.connect(self.on_add_clicked)
         top.addWidget(self.url_input)
         top.addWidget(add_btn)
-
+        
         # Middle: list
         self.link_list = QListWidget()
         self.link_list.setAcceptDrops(False)
+        self.link_list.setMinimumHeight(300)
 
         # Right-side small toolbar
         toolbar = QHBoxLayout()
+        toolbar.setSpacing(5)
         remove_btn = QPushButton('Remove Selected')
         remove_btn.clicked.connect(self.remove_selected)
         download_btn = QPushButton('Download All')
@@ -70,6 +71,8 @@ class DownoaderWidget(QWidget):
         folder_btn.clicked.connect(self.choose_folder)
         self.folder_label = QLabel(self.cfg.get('last_folder', str(Path.home())))
         self.folder_label.setMinimumWidth(220)
+        show_btn = QPushButton('Open Folder')
+        show_btn.clicked.connect(self.show_in_explorer)
 
         # Dark mode toggle
         self.dark_toggle = QCheckBox('Dark mode')
@@ -80,6 +83,7 @@ class DownoaderWidget(QWidget):
         toolbar.addWidget(self.format_combo)
         toolbar.addWidget(folder_btn)
         toolbar.addWidget(self.folder_label)
+        toolbar.addWidget(show_btn)
         toolbar.addWidget(remove_btn)
         toolbar.addWidget(download_btn)
         toolbar.addWidget(self.dark_toggle)
@@ -133,18 +137,7 @@ class DownoaderWidget(QWidget):
             item = self.link_list.item(i)
             widget = self.link_list.itemWidget(item)
             widget.download()
-            # widget.set_status('Queued')
-            # signals = DownloadWorkerSignals()
-            # signals.progress.connect(widget.set_progress)
-            # signals.status.connect(widget.set_status)
-            # signals.finished.connect(widget.on_finished)
-            # worker = DownloadTask(widget.url, self.download_folder,
-            #                       fmt, signals, DownloadTypes.YTDLP)
-            # widget.worker = worker
-            # self.threadpool.start(worker)
         print(f'Started downloading {count} items.')
-
-
 
     def choose_folder(self):
         folder = QFileDialog.getExistingDirectory(
@@ -169,3 +162,13 @@ class DownoaderWidget(QWidget):
 
     def apply_light_style(self):
         qdarktheme.setup_theme("light")
+
+    def show_in_explorer(self):
+        if self.download_folder and os.path.exists(self.download_folder):
+            # Open containing folder and select file
+            path = os.path.abspath(self.download_folder)
+            if os.name == 'nt':  # Windows
+                os.startfile(path)
+            elif os.name == 'posix':
+                # Linux / macOS
+                QDesktopServices.openUrl(QUrl.fromLocalFile(path))  

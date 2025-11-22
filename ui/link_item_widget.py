@@ -1,28 +1,30 @@
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QApplication,
-    QStyle, QPushButton
-)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QApplication, QStyle
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QPixmap, QDesktopServices
 
 from core.signals import DownloadWorkerSignals
 from core.types import DownloadTypes
 from core.worker import DownloadTask
-
+import os
 
 class LinkItemWidget(QWidget):
     def __init__(self, url, parent=None):
         super().__init__(parent)
         self.url = url
+        self.worker = None
+
+        # Layouts
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(6, 6, 6, 6)
         self.setLayout(self.layout)
-        self.worker = None
+
+        # Thumbnail
         self.thumb = QLabel()
         self.thumb.setFixedSize(96, 54)
         self.thumb.setScaledContents(True)
         self.thumb.setPixmap(self.style().standardPixmap(QStyle.SP_FileIcon).scaled(96, 54))
 
+        # Info layout
         self.info_layout = QVBoxLayout()
         self.title_label = QLabel(url)
         self.title_label.setWordWrap(True)
@@ -30,22 +32,18 @@ class LinkItemWidget(QWidget):
         self.progress = QProgressBar()
         self.progress.setValue(0)
         self.progress.setFixedHeight(14)
-
         self.info_layout.addWidget(self.title_label)
         self.info_layout.addWidget(self.status_label)
         self.info_layout.addWidget(self.progress)
-        # Stop button
-        # self.stop_button = QPushButton("Stop")
-        # self.stop_button.setFixedSize(60, 24)
-        # self.stop_button.clicked.connect(self.stop_download)
-        # Download button
+
+        # Buttons
         self.download_button = QPushButton("Download")
         self.download_button.setFixedSize(60, 24)
         self.download_button.clicked.connect(self.download)
+
         # Assemble layout
         self.layout.addWidget(self.thumb)
         self.layout.addLayout(self.info_layout)
-        # self.layout.addWidget(self.stop_button)
         self.layout.addWidget(self.download_button)
 
     def download(self):
@@ -54,10 +52,14 @@ class LinkItemWidget(QWidget):
         signals = DownloadWorkerSignals()
         signals.progress.connect(self.set_progress)
         signals.status.connect(self.set_status)
-        signals.finished.connect(lambda success, msg: self.set_status(
-            "Finished" if success else f"Error: {msg}"))
-        self.worker = DownloadTask(self.url, main_window.download_folder,
-                                   main_window.format_combo.currentText(), signals, DownloadTypes.YTDLP)
+        signals.finished.connect(self.on_finished)
+        self.worker = DownloadTask(
+            self.url,
+            main_window.download_folder,
+            main_window.format_combo.currentText(),
+            signals,
+            DownloadTypes.YTDLP
+        )
         main_window.threadpool.start(self.worker)
 
     def set_thumbnail(self, qpixmap: QPixmap):
@@ -74,22 +76,16 @@ class LinkItemWidget(QWidget):
 
     def stop_download(self):
         if self.worker:
-            self.worker.stop()        # Call the stop method in DownloadTask
+            self.worker.stop()
             self.set_status("Stopping...")
-            self.stop_button.setEnabled(False)  # Disable button after cl
+            self.stop_button.setEnabled(False)
 
-    def on_finished(self,  success: bool, message: str):
+    def on_finished(self, success: bool, message: str):
         if success:
             self.set_status('Completed')
             self.set_progress(100)
-            # beep
-            try:
-                # try QSoundEffect - if not loaded, fallback to beep
-                if self.window().sound.source().isEmpty():
-                    QApplication.beep()
-                else:
-                    self.window().sound.play()
-            except Exception:
-                QApplication.beep()
+            QApplication.beep()
         else:
             self.set_status(f'Failed: {message}')
+
+    
