@@ -37,7 +37,7 @@ class LinkItemWidget(QWidget):
 
         # Buttons
         self.download_button = QPushButton("Download")
-        self.download_button.setFixedSize(60, 24)
+        # self.download_button.setFixedSize(60, 24)
         self.download_button.clicked.connect(self.download)
 
         # Assemble layout
