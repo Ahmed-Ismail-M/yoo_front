@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
-from PySide6.QtGui import QPixmap, QIcon, QFont, QPalette, QColor
-
+from PySide6.QtGui import QPixmap, QIcon, QFont, QPalette, QColor, QDesktopServices, QPainter, QPainterPath
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
+    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QDialog, QFrame, QMenuBar, QMenu,
     QListWidget, QListWidgetItem, QFileDialog, QMessageBox, QLabel, QComboBox, QCheckBox, QSpacerItem
 )
 from PySide6.QtCore import QThreadPool
@@ -20,9 +20,7 @@ class DownloaderWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.cfg = load_config()
-        # self.download_folder = Path(self.cfg.get('last_folder', Path.home()))
         self.download_folder = self.cfg.get('last_folder', str(Path.home()))
-        # Apply theme first
         theme = "dark" if self.cfg.get('dark_mode', False) else "light"
         qdarktheme.setup_theme(theme, corner_shape="rounded")
 
@@ -86,7 +84,6 @@ class DownloaderWidget(QWidget):
         self.link_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
         self.link_list.setStyleSheet("""
             QListWidget::item { padding: 8px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-            QListWidget::item:selected { background: palette(highlight); }
         """)
         main_layout.addWidget(self.link_list)
 
@@ -100,22 +97,20 @@ class DownloaderWidget(QWidget):
         self.format_combo.addItems([
             "Best Quality (Video + Audio)",
             "1080p", "720p", "480p", "360p",
-            "Audio Only (Best MP3)",
-            "Audio Only (M4A)"
+            # "Audio Only (Best MP3)",
+            # "Audio Only (M4A)"
         ])
         preset = self.cfg.get('format_preset', 'Best Quality (Video + Audio)')
         self.format_combo.setCurrentText(preset)
         # self.format_combo.currentTextChanged.connect(self.on_format_changed)
 
         # Folder selection
-        folder_btn = QPushButton("Choose Folder")
+        folder_btn = QPushButton("Choose")
         folder_btn.setIcon(QIcon.fromTheme("folder"))
         folder_btn.setMinimumHeight(40)
         folder_btn.clicked.connect(self.choose_folder)
 
         self.folder_label = QLabel(str(self.download_folder))
-        self.folder_label.setStyleSheet("color: palette(mid);")
-        # self.folder_label.setElideMode(Qt.TextElideMode.ElideLeft)
         self.folder_label.setMinimumWidth(200)
 
         open_folder_btn = QPushButton("Open")
@@ -123,11 +118,11 @@ class DownloaderWidget(QWidget):
         open_folder_btn.clicked.connect(self.show_in_explorer)
 
         # Action buttons
-        remove_btn = QPushButton("Remove Selected")
+        remove_btn = QPushButton("Remove")
         remove_btn.setIcon(QIcon.fromTheme("list-remove"))
         remove_btn.clicked.connect(self.remove_selected)
 
-        self.download_btn = QPushButton("Download All")
+        self.download_btn = QPushButton("Save All")
         self.download_btn.setIcon(QIcon.fromTheme("document-save"))
         self.download_btn.setMinimumHeight(48)
         self.download_btn.setStyleSheet("""
@@ -160,6 +155,15 @@ class DownloaderWidget(QWidget):
         # Sound effect for feedback
         self.sound = QSoundEffect()
         # self.sound.setSource(QUrl.fromLocalFile(":/sounds/add.wav"))  # optional
+        self.create_menu()
+
+    def create_menu(self):
+        menubar = QMenuBar(self)
+        help_menu = QMenu("Help", self)
+        about_action = help_menu.addAction("About the Developer")
+        about_action.triggered.connect(self.show_about_logarizm)
+        menubar.addMenu(help_menu)
+        self.layout().setMenuBar(menubar)
 
     def apply_custom_styling(self):
         # Extra polish
@@ -264,3 +268,117 @@ class DownloaderWidget(QWidget):
             elif os.name == 'posix':
                 # Linux / macOS
                 QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+
+    def show_about_logarizm(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("About Logarizm")
+        dialog.setModal(True)
+        dialog.resize(460, 620)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(32, 32, 32, 32)
+        layout.setSpacing(18)
+
+        # ── Logo / Icon ─────────────────────────────────────
+        logo_label = QLabel()
+        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo_label.setMinimumHeight(100)
+
+        logo_path = "assets/media/logo.png"  # 256x256 or 512x512 PNG with transparency
+        if Path(logo_path).exists():
+            pixmap = QPixmap(logo_path).scaled(
+                96, 96, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            # Circular clip
+            circular = QPixmap(96, 96)
+            circular.fill(Qt.GlobalColor.transparent)
+            painter = QPainter(circular)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            path = QPainterPath()
+            path.addEllipse(0, 0, 96, 96)
+            painter.setClipPath(path)
+            painter.drawPixmap(0, 0, pixmap)
+            painter.end()
+            logo_label.setPixmap(circular)
+        else:
+            logo_label.setText("Logarizm")
+            logo_label.setFont(QFont("Segoe UI", 32, QFont.Weight.Bold))
+            logo_label.setStyleSheet("color: #6C5CE7;")  # nice purple/indigo
+
+        layout.addWidget(logo_label)
+
+        # ── Title ───────────────────────────────────────────
+        title = QLabel("Logarizm")
+        title.setFont(QFont("Segoe UI", 24, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+
+        tagline = QLabel("Simple tools for everyday people")
+        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(tagline)
+
+        # ── Separator ───────────────────────────────────────
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        line.setStyleSheet("margin: 16px 0;")
+        layout.addWidget(line)
+
+        # ── The Heartfelt Message ───────────────────────────
+        message = QLabel(
+            "Hi! We're <b>Logarizm</b> — a tiny independent developer (or two friends) "
+            "making free, clean, and honest software.\n\n"
+            "No ads. No trackers. No subscriptions.\n"
+            "Just useful tools built with care because we needed them ourselves.\n\n"
+            "This YouTube Downloader is 100% open source and will always stay free.\n\n"
+            "If it saves you time or makes you smile — that’s more than enough for us"
+        )
+        message.setWordWrap(True)
+        message.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        message.setStyleSheet("font-size: 14px; line-height: 1.7;")
+        layout.addWidget(message)
+
+        # ── Support (optional & gentle) ─────────────────────
+        support = QLabel(
+            "<p style='text-align:center; color:#a0a0a0; font-size:13px;'>"
+            "Love this app? You can support our work<br>"
+            # "<a href='https://buymeacoffee.com/logarizm' style='color:#00A8E8;'>Buy us a coffee</a> • "
+            "<a href='https://github.com/Ahmed-Ismail-M' style='color:#00A8E8;'>Star on GitHub</a> • "
+            "<a href='https://logarizm.com' style='color:#00A8E8;'>Visit logarizm.com</a>"
+            "</p>"
+        )
+        support.setOpenExternalLinks(True)
+        support.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(support)
+
+        layout.addStretch()
+
+        # ── Version & License ───────────────────────────────
+        footer = QLabel(
+            "YT Downloader v1.0<br>"
+            "Made with <span style='color:#E91E63;'>♥</span> using Python (yt-dlp) + PyQt6<br>"
+            "© 2025 Logarizm • <a href='https://github.com/Ahmed-Ismail-M/ytdx'>Open Source</a>"
+        )
+        footer.setOpenExternalLinks(True)
+        footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        footer.setStyleSheet("font-size: 12px;")
+        layout.addWidget(footer)
+
+        # ── Close Button ────────────────────────────────────
+        close_btn = QPushButton("Close")
+        close_btn.setMinimumHeight(48)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background: #6C5CE7;
+                color: white;
+                border-radius: 12px;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            QPushButton:hover { background: #5A4FCF; }
+        """)
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+
+        dialog.exec()
