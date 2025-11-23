@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QThreadPool
 from PySide6.QtMultimedia import QSoundEffect
 
-from core.config_manager import load_config, save_config
+from core.config_manager import load_config, save_config, resource_path
 from core.metadata_fetcher import MetadataFetcher
 from ui.link_item_widget import LinkItemWidget
 import qdarktheme
@@ -283,7 +283,7 @@ class DownloaderWidget(QWidget):
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         logo_label.setMinimumHeight(100)
 
-        logo_path = "assets/media/logo.png"  # 256x256 or 512x512 PNG with transparency
+        logo_path = resource_path("assets/media/logo.png")  # 256x256 or 512x512 PNG with transparency
         if Path(logo_path).exists():
             pixmap = QPixmap(logo_path).scaled(
                 96, 96, Qt.AspectRatioMode.KeepAspectRatioByExpanding,

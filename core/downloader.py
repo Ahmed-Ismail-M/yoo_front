@@ -4,18 +4,9 @@ import shutil
 from tempfile import NamedTemporaryFile
 import yt_dlp
 from pathlib import Path
-import platform
+from core.config_manager import BIN_PATH, FFMPEG_PATH, FFPROBE_PATH, SYSTEM
 
 
-
-SYSTEM = platform.system()
-BIN_PATH = Path(r"D:\projects\ytdx\bin")
-# BIN_PATH = Path(__file__).parent.parent / 'bin'
-FFMPEG_PATH = BIN_PATH / ('ffmpeg.exe' if SYSTEM == 'Windows' else 'ffmpeg')
-FFPROBE_PATH = BIN_PATH / ('ffprobe.exe' if SYSTEM == 'Windows' else 'ffprobe')
-os.environ["PATH"] += os.pathsep + str(BIN_PATH)
-os.environ["FFMPEG"] = str(FFMPEG_PATH)
-os.environ["FFPROBE"] = str(FFPROBE_PATH)
 
 
 class HttpDownloader:
@@ -133,6 +124,7 @@ def download_missing_binaries():
 
     bin_dir = Path(BIN_PATH)
     bin_dir.mkdir(exist_ok=True)
+    print(f"Checking binaries in {bin_dir}")
     dependancies = ['ffmpeg', 'ffprobe']
     for dep in dependancies:
         file = binaries[SYSTEM][dep]
@@ -141,5 +133,7 @@ def download_missing_binaries():
             + file["exe"]
         )
         if not file['path'].exists():
+            print(f"Downloading missing binary: {dep} from {url}")
             httpDownloader = HttpDownloader(url=url, filename=str(file['path']))
             httpDownloader.download()
+            print(f"Downloaded {dep} to {file['path']}")
