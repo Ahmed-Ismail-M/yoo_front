@@ -24,7 +24,7 @@ class DownloaderWidget(QWidget):
         theme = "dark" if self.cfg.get('dark_mode', False) else "light"
         qdarktheme.setup_theme(theme, corner_shape="rounded")
 
-        self.setWindowTitle("YT Downloader")
+        self.setWindowTitle("YTDX")
         self.setMinimumSize(800, 600)
         self.resize(1000, 700)
         self.setAcceptDrops(True)
@@ -43,7 +43,7 @@ class DownloaderWidget(QWidget):
 
         # === HEADER: Title + Dark Mode Toggle ===
         header = QHBoxLayout()
-        title = QLabel("YouTube Downloader")
+        title = QLabel("Video Downloader")
         title_font = QFont("Segoe UI", 18, QFont.Weight.Bold)
         title.setFont(title_font)
 
@@ -355,7 +355,7 @@ class DownloaderWidget(QWidget):
 
         # ── Version & License ───────────────────────────────
         footer = QLabel(
-            "YT Downloader v1.0<br>"
+            "YTDX v1.0<br>"
             "Made with <span style='color:#E91E63;'>♥</span> using Python (yt-dlp) + PyQt6<br>"
             "© 2025 Logarizm • <a href='https://github.com/Ahmed-Ismail-M/ytdx'>Open Source</a>"
         )
