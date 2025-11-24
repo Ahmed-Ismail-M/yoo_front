@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from PySide6.QtGui import QPixmap, QIcon, QFont, QPalette, QColor, QDesktopServices, QPainter, QPainterPath
+from PySide6.QtGui import QPixmap, QIcon, QFont, QDesktopServices, QPainter, QPainterPath
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QDialog, QFrame, QMenuBar, QMenu,
