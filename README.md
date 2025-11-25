@@ -1,4 +1,4 @@
-# ytdx
+# yoo_front
 This project is a user-friendly GUI for the powerful yt-dlp engine, designed to make downloading videos and audio from YouTube and other supported platforms simple and accessible
 
 ## 🚀 Features
@@ -13,7 +13,7 @@ This project is a user-friendly GUI for the powerful yt-dlp engine, designed to 
 
 ## 🖥️ Windows Setup
 Download the latest Windows installer:  
-👉 **[Windows Setup](https://github.com/Ahmed-Ismail-M/ytdx/releases/download/v1.0.0/YTDXSetup.exe)**
+👉 **[Windows Setup](https://github.com/Ahmed-Ismail-M/yoo_front/releases/download/v1.0.0/yoo_frontSetup.exe)**
 
 ---
 

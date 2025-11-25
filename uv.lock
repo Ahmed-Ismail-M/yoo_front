@@ -3,6 +3,6 @@ revision = 3
 requires-python = ">=3.11"
 
 [[package]]
-name = "ytdx"
+name = "yoo_front"
 version = "0.1.0"
 source = { virtual = "." }

@@ -3,7 +3,7 @@ from pathlib import Path
 import platform
 import sys
 import os
-APP_NAME = "YTDX"
+APP_NAME = "yoo_front"
 ROOT = Path(os.getenv("LOCALAPPDATA", ".")) / APP_NAME
 
 
